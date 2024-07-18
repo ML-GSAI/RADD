@@ -1,0 +1,10 @@
+name: small_radd
+type: ddit_wot
+hidden_size: 768
+cond_dim: 128
+length: 1024
+n_blocks: 12
+n_heads: 12
+dropout: 0.02
+use_checkpoint: False
+dtype: float16

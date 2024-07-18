@@ -1,0 +1,10 @@
+name: medium_radd
+type: ddit_wot
+hidden_size: 1024
+cond_dim: 128
+length: 1024
+n_blocks: 24
+n_heads: 16
+dropout: 0.02
+use_checkpoint: False
+dtype: float16

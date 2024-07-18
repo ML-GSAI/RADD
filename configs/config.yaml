@@ -1,0 +1,70 @@
+defaults:
+  - _self_
+  - model: small_radd
+  - override hydra/launcher: submitit_slurm
+
+ngpus: 4
+tokens: 50257
+gpt_dir: gpt2-large
+outdir: ../output
+
+
+training:
+  batch_size: 512
+  accum: 16
+  n_iters: 1000001
+  snapshot_freq: 50000
+  log_freq: 50
+  eval_freq: 100
+  snapshot_freq_for_preemption: 10000
+  weight: standard
+  snapshot_sampling: True
+  ema: 0.9999
+  loss_type: t_DCE
+
+data:
+  train: openwebtext
+  valid: wikitext103
+  cache_dir: data
+
+
+noise:
+  type: loglinear
+  sigma_min: 1e-4
+  sigma_max: 20
+
+sampling:
+  predictor: euler
+  steps: 1024
+
+eval:
+  batch_size: 512
+  perplexity: True
+  perplexity_batch_size: 16
+
+optim:
+  weight_decay: 0
+  optimizer: AdamW
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1e-8
+  warmup: 2500
+  grad_clip: 1.
+
+
+hydra:
+  run:
+    dir: ${outdir}/${now:%Y.%m.%d}/${now:%H%M%S}
+  sweep:
+    dir: exp/${now:%Y.%m.%d}/${now:%H%M%S}
+    subdir: ${hydra.job.num}
+  launcher:
+    max_num_timeout: 100000
+    # timeout_min: 10079
+    partition: g40x
+    account: stanford
+    mem_gb: 96
+    cpus_per_task: 40
+    gpus_per_node: ${ngpus}
+    constraint: null
