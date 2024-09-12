@@ -71,12 +71,12 @@ python run_sample.py \
 ```
 
 ### Sampling with `DiffusionSampler`
-The `DiffusionSampler` can be used with either the Tweedie $\tau$-leaping or Euler method. Both are implemented with cache strategy, which is up to 3.5 faster than the samplers propsed in D3PM and SEDD. Here's an example of employing the Tweedie $\tau$-leaping method:
+The `DiffusionSampler` can be used with either the Tweedie $\tau$-leaping or Euler method, both of which support ***efficient batching sampling with a cache strategy*** that improves sampling speed by up to 3.5 times compared to samplers proposed in D3PM and SEDD. Here's an example of employing the Tweedie $\tau$-leaping method:
 
 ```bash
 python run_sample.py \
 --model_path JingyangOu/radd-t-dce \
---batch_size 1 \
+--batch_size 2 \
 --length 1024 \
 --steps 1024 \
 --method tweedie \
