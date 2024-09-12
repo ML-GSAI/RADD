@@ -161,7 +161,7 @@ def _run(local_rank, gloab_rank, world_size, cfg):
                 if cfg.data.valid != "text8":
                     eval_batch = next(eval_iter)['input_ids'].to(device)
                 else:
-                    eval_batch = next(train_iter).to(device)
+                    eval_batch = next(eval_iter).to(device)
                 eval_loss = eval_step_fn(state, eval_batch)
 
                 dist.all_reduce(eval_loss)
