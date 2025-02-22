@@ -4,12 +4,32 @@ import torch.nn.functional as F
 import numpy as np
 from noise_lib import add_noise_t, add_noise_lambda, add_noise_k
 
-
+def Batch_Uniform_Sampler(B, type = 'naive', device = 'cuda'):
+    def vdm_sampler(B, device):
+        u_0 = torch.rand(1, device=device)  # Sample u_0 from U(0, 1)
+        t = [(u_0 + i / B) % 1 for i in range(B)]
+        t = torch.tensor(t, device=device)
+        return t
+    
+    def decoupled_sampler(B, device):
+        u = torch.rand(B, device=device)  # Sample B independent values from U(0, 1)
+        t = [(u[i] + i) / B for i in range(B)]
+        t = torch.tensor(t, device=device)
+        return t
+    if type == 'naive':
+        return torch.rand(B, device = device)
+    elif type == 'vdm':
+        return vdm_sampler(B, device)
+    elif type == 'decoupled':
+        return decoupled_sampler(B, device)
+    else:
+        raise ValueError(f"{type} not valid")
+    
 
 def get_loss_fn(noise, token_dim, train, sampling_eps=1e-3, loss_type='lambda_DCE',order = torch.arange(1024)):
     def t_DSE_loss(model, batch, cond = None):
         # sample t and add noise
-        t = (1 - sampling_eps) * torch.rand(batch.shape[0], device=batch.device) + sampling_eps
+        t = (1 - sampling_eps) * Batch_Uniform_Sampler(batch.shape[0], type = 'vdm', device = batch.device) + sampling_eps
         sigma, dsigma = noise(t)
         sigma, dsigma = sigma[:,None], dsigma[:,None]
         perturbed_batch = add_noise_t(batch, sigma, token_dim - 1)
@@ -42,7 +62,7 @@ def get_loss_fn(noise, token_dim, train, sampling_eps=1e-3, loss_type='lambda_DC
 
     def t_DCE_loss(model, batch, cond = None):
         # sample t and add noise
-        t = (1 - sampling_eps) * torch.rand(batch.shape[0], device=batch.device) + sampling_eps
+        t = (1 - sampling_eps) * Batch_Uniform_Sampler(batch.shape[0], type = 'vdm', device = batch.device) + sampling_eps
         sigma, dsigma = noise(t)
         sigma, dsigma = sigma[:,None], dsigma[:,None]
         perturbed_batch = add_noise_t(batch, sigma, token_dim - 1)
@@ -67,7 +87,8 @@ def get_loss_fn(noise, token_dim, train, sampling_eps=1e-3, loss_type='lambda_DC
 
     def lambda_DCE_loss(model, batch, cond = None):
         # sample lambda and add noise
-        Lambda = torch.rand(batch.shape[0], device=batch.device)
+        # Lambda = torch.rand(batch.shape[0], device=batch.device)
+        Lambda = Batch_Uniform_Sampler(batch.shape[0], type = 'decoupled', device = batch.device)
         perturbed_batch = add_noise_lambda(batch, Lambda, token_dim - 1)
         masked_index = perturbed_batch == token_dim - 1
         masked_batch = batch[masked_index]
